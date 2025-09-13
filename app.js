@@ -23,7 +23,7 @@ require('dotenv').config();
 
 const client_id = process.env.clientID; // Your client id
 const client_secret = process.env.clientSecret; // Your secret
-const privateKey = fs.readFileSync('AuthKey_A8FKGGUQP3.p8').toString();
+//const privateKey = fs.readFileSync('AuthKey_A8FKGGUQP3.p8').toString();
 const teamId = process.env.teamId;
 const keyId = process.env.keyId;
 
@@ -77,7 +77,7 @@ app.get('/login', function (req, res) {
   );
 });
 
-app.get('/applemusic', function (req, res) {
+/** app.get('/applemusic', function (req, res) {
   const token = jwt.sign({}, privateKey, {
     algorithm: 'ES256',
     expiresIn: '180d',
@@ -101,7 +101,7 @@ app.get('/applemusic', function (req, res) {
   // let music = MusicKit.getInstance();
   // music.authorize().then(console.log('hello'));
   // res.sendFile(__dirname + '/public/applemusic.html');
-});
+}); */
 
 app.get('/lastfm', function (req, res) {
   // res.redirect(
