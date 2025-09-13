@@ -16,6 +16,92 @@ const savePlaylistBtn = () => document.getElementById('save-playlist');
 let displayName = 'RECEIPTIFY';
 let username = null;
 
+// --- ADD THIS NEW CODE TO public/server.js ---
+
+let signer;
+let provider;
+const connectWalletBtn = document.getElementById('connectWalletBtn');
+const mintNftBtn = document.getElementById('mintNftBtn');
+
+async function connectWallet() {
+    if (typeof window.ethereum === 'undefined') {
+        alert("Please install MetaMask!");
+        return;
+    }
+    try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        const address = await signer.getAddress();
+
+        // Update UI
+        connectWalletBtn.textContent = `Connected: ${address.substring(0, 6)}...`;
+        connectWalletBtn.disabled = true;
+        mintNftBtn.style.display = 'block'; // Show the mint button
+    } catch (error) {
+        console.error("Failed to connect wallet", error);
+        alert("Wallet connection failed.");
+    }
+}
+
+async function mintNFT() {
+    if (!signer) {
+        alert("Please connect your wallet first.");
+        return;
+    }
+
+    alert("Minting process started. Please wait for pop-ups.");
+    mintNftBtn.textContent = 'Preparing...';
+    mintNftBtn.disabled = true;
+
+    try {
+        // 1. Get image data from canvas
+        const receiptElement = document.querySelector('.receiptContainer');
+        const canvas = await html2canvas(receiptElement);
+        const imageData = canvas.toDataURL('image/png').split(',')[1];
+
+        // This is a simplified version of getting track data.
+        // You will need to get the actual track data that was rendered.
+        const tempTrackData = [{ name: "Song 1", artists: [{ name: "Artist A" }] }];
+
+        // 2. Send to backend to get tokenURI
+        const response = await fetch('/upload-to-ipfs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                imageData: imageData,
+                userName: displayName,
+                timeRange: 'Last Month', // You'll need to get the current time range
+                tracks: tempTrackData
+            })
+        });
+        const { tokenURI } = await response.json();
+
+        if (!tokenURI) throw new Error("Could not get tokenURI from server.");
+
+        // 3. Interact with the smart contract
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const transaction = await contract.safeMint(tokenURI);
+
+        mintNftBtn.textContent = 'Minting... Please Wait';
+        await transaction.wait(); // Wait for the transaction to be mined
+
+        alert("NFT Minted Successfully!");
+        mintNftBtn.textContent = 'Mint as NFT';
+
+    } catch (error) {
+        console.error("Minting failed", error);
+        alert("Minting failed. Check the console for errors.");
+        mintNftBtn.textContent = 'Mint as NFT';
+    } finally {
+        mintNftBtn.disabled = false;
+    }
+}
+
+// Attach event listeners
+connectWalletBtn.addEventListener('click', connectWallet);
+mintNftBtn.addEventListener('click', mintNFT);
+
 const customReceipt = [];
 
 const DATE_OPTIONS = {

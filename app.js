@@ -11,6 +11,9 @@ const request = require('request');
 // const axios = require("axios"); // "Request" library
 // const bodyParser = require("body-parser");
 // const cors = require("cors");
+const PinataSDK = require('@pinata/sdk');
+const { Readable } = require('stream');
+
 const querystring = require('querystring');
 const cookieParser = require('cookie-parser');
 const fs = require('fs');
@@ -48,6 +51,7 @@ var generateRandomString = function (length) {
 var stateKey = 'spotify_auth_state';
 
 var app = express();
+app.use(express.json({ limit: '10mb' }));
 // app.engine("handlebars", exphbs({ defaultLayout: null }));
 // app.set("view engine", "handlebars");
 // app.set("views", __dirname + "/views");
@@ -199,6 +203,48 @@ app.get('/refresh_token', function (req, res) {
       });
     }
   });
+});
+
+// ADD THIS NEW ENDPOINT
+app.post('/upload-to-ipfs', async (req, res) => {
+    const { imageData, userName, timeRange, tracks } = req.body;
+
+    if (!process.env.PINATA_API_KEY || !process.env.PINATA_SECRET_KEY) {
+        return res.status(500).json({ error: 'Pinata keys not configured.' });
+    }
+
+    try {
+        const pinata = new PinataSDK(process.env.PINATA_API_KEY, process.env.PINATA_SECRET_KEY);
+
+        // 1. Upload Image
+        const imageBuffer = Buffer.from(imageData, 'base64');
+        const imageStream = Readable.from(imageBuffer);
+        const imageResult = await pinata.pinFileToIPFS(imageStream, {
+            pinataMetadata: { name: `receipt-${Date.now()}.png` },
+        });
+
+        // 2. Create Metadata
+        const metadata = {
+            name: `Spotify Receipt for ${userName}`,
+            description: `A receipt of top tracks for the period: ${timeRange}.`,
+            image: `https://gateway.pinata.cloud/ipfs/${imageResult.IpfsHash}`,
+            attributes: tracks.map((track, index) => ({
+                trait_type: `Track #${index + 1}`,
+                value: `${track.name} by ${track.artists[0].name}`,
+            })),
+        };
+
+        // 3. Upload Metadata
+        const metadataResult = await pinata.pinJSONToIPFS(metadata);
+        const tokenURI = `https://gateway.pinata.cloud/ipfs/${metadataResult.IpfsHash}`;
+
+        // 4. Send URI back to frontend
+        res.status(200).json({ tokenURI });
+
+    } catch (error) {
+        console.error("IPFS Upload Error:", error);
+        res.status(500).json({ error: 'Failed to upload to IPFS.' });
+    }
 });
 
 app.listen(process.env.PORT || 3000, function () {
