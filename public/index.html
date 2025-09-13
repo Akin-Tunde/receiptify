@@ -527,19 +527,28 @@
           </p>
           <br />
           <br />
+          <!-- ... (your footer div) ... -->
         </div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-        <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-        <script src="dom-to-image.min.js"></script>
-        <script src="FileSaver.min.js"></script>
+        <!-- Load Libraries with DEFER to ensure correct execution order -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js" defer></script>
+        <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" defer></script>
+        <script src="dom-to-image.min.js" defer></script>
+        <script src="FileSaver.min.js" defer></script>
+        
+        <!-- Apple's script has its own loading logic (async), so we leave it as is -->
         <script
           src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"
           data-web-components
           async
         ></script>
-        <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript">
-    </script>
-        <script type="module" src="server.js"></script>
+
+        <!-- Load Ethers.js library FIRST with DEFER -->
+        <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript" defer></script>
+
+        <!-- Load your main application script LAST, also with DEFER and type="module" -->
+        <script type="module" src="server.js" defer></script>
+
+       
       </div>
     </div>
   </body>
