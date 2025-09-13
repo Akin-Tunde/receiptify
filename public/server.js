@@ -22,8 +22,6 @@ let currentTracksForNFT = [];
 
 let signer;
 let provider;
-const connectWalletBtn = document.getElementById('connectWalletBtn');
-const mintNftBtn = document.getElementById('mintNftBtn');
 
 async function connectWallet() {
     if (typeof window.ethereum === 'undefined') {
@@ -100,9 +98,6 @@ async function mintNFT() {
     }
 }
 
-// Attach event listeners
-connectWalletBtn.addEventListener('click', connectWallet);
-mintNftBtn.addEventListener('click', mintNFT);
 
 const customReceipt = [];
 
@@ -788,6 +783,14 @@ const displayReceipt = (response, stats) => {
   newTabBtn().addEventListener('click', newTab);
   logoutBtn().addEventListener('click', logout);
 
+    // Find the buttons fresh every time a receipt is displayed
+  const connectWalletBtn = document.getElementById('connectWalletBtn');
+  const mintNftBtn = document.getElementById('mintNftBtn');
+
+  // Attach Web3 Listeners
+  connectWalletBtn.addEventListener('click', connectWallet);
+  mintNftBtn.addEventListener('click', mintNFT);
+  
   if (type === 'tracks') {
     $('#save-playlist').show();
     document
