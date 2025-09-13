@@ -2,6 +2,7 @@
  * Obtains parameters from the hash of the URL
  * @return Object
  */
+import { contractAddress, contractABI } from '../../contract/contractInfo.js';
 const SPOTIFY_ROOT = 'https://api.spotify.com/v1';
 var userProfileSource = document.getElementById(
     'user-profile-template'
@@ -15,6 +16,7 @@ const savePlaylistBtn = () => document.getElementById('save-playlist');
 
 let displayName = 'RECEIPTIFY';
 let username = null;
+let currentTracksForNFT = [];
 
 // --- ADD THIS NEW CODE TO public/server.js ---
 
@@ -29,7 +31,7 @@ async function connectWallet() {
         return;
     }
     try {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
+      provider = new window.ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         const address = await signer.getAddress();
@@ -71,8 +73,8 @@ async function mintNFT() {
             body: JSON.stringify({
                 imageData: imageData,
                 userName: displayName,
-                timeRange: 'Last Month', // You'll need to get the current time range
-                tracks: tempTrackData
+                 timeRange: getPeriod(), // You'll need to get the current time range
+                tracks: currentTracksForNFT
             })
         });
         const { tokenURI } = await response.json();
@@ -80,7 +82,7 @@ async function mintNFT() {
         if (!tokenURI) throw new Error("Could not get tokenURI from server.");
 
         // 3. Interact with the smart contract
-        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+     const contract = new window.ethers.Contract(contractAddress, contractABI, signer);
         const transaction = await contract.safeMint(tokenURI);
 
         mintNftBtn.textContent = 'Minting... Please Wait';
@@ -751,6 +753,7 @@ const displayReceipt = (response, stats) => {
       ),
     };
   });
+  currentTracksForNFT = responseItems;
   const totalFormatted =
     type === 'tracks' || showSearch ? getMinSeconds(total) : total.toFixed(2);
 
